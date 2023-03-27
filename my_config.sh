@@ -21,6 +21,12 @@ sudo apt install tree -y
 sudo apt install make -y
 sudo apt install gcc -y
 
+# GIT config
+read -p "What is your GIT email?: " git_email
+git config --global user.email "$git_email"
+read -p "What is your GIT name?: " git_name
+git config --global user.email "$git_name"
+
 # Install Tmux config
 cd
 git clone https://github.com/gpakosz/.tmux.git
