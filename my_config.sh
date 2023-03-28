@@ -1,5 +1,18 @@
 #!/bin/bash
 
+# Creating user
+while true; do
+read -p "Do you want to create admin users? (y/N): " choice
+
+if [ "$choice" = "y" ]; then
+  read -p "Enter user name: " user_name
+  adduser $user_name
+  usermod -aG sudo $user_name
+fi
+break
+
+done
+
 # Update the system
 sudo apt update
 sudo apt upgrade -y
