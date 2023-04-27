@@ -29,6 +29,7 @@ sudo apt install lsof -y
 sudo apt install htop -y
 sudo apt install tmux -y
 sudo apt install tree -y
+sudo apt install fd-find -y
 
 # install compilers
 sudo apt install make -y
@@ -39,6 +40,13 @@ read -p "What is your GIT email?: " git_email
 git config --global user.email "$git_email"
 read -p "What is your GIT name?: " git_name
 git config --global user.email "$git_name"
+
+#SSH key generation
+ssh-keygen -t ed25519 -C "$git_email"
+
+printf '\033]52;c;%s\007' "$(base64 < ~/.ssh/id_ed25519.pub)"
+echo "SSH key for Github (already in you system buffer): "
+cat ~/.ssh/id_ed25519.pub
 
 # Install Tmux config
 cd
@@ -74,7 +82,7 @@ sudo apt autoremove -y
 sudo apt autoclean
 
 # SSH key generation
-ssh-keygen
+# ssh-keygen
 
 # Configure access to a remote server by SSH
 
@@ -84,7 +92,7 @@ read -p "Do you want to configure remote access to a remote server by SSH? (y/N)
 if [ "$choice" = "y" ]; then
   read -p "Enter the remote server alias name: " server_name
   read -p "Enter the remote server IP address: " ip_address
-read -p "Enter the username for SSH access: " username
+  read -p "Enter the username for SSH access: " username
   read -p "Enter the SSH port (default is 22): " ssh_port
 
   # Configure SSH access
