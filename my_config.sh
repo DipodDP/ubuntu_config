@@ -40,11 +40,13 @@ read -p "What is your GIT email?: " git_email
 git config --global user.email "$git_email"
 read -p "What is your GIT name?: " git_name
 git config --global user.email "$git_name"
+git config --global alias.st status
+git config --global alias.unstage 'reset HEAD --'
 
 #SSH key generation
-ssh-keygen -t ed25519 -C "$git_email"
+ssh-keygen -C "$git_email"
 
-printf '\033]52;c;%s\007' "$(base64 < ~/.ssh/id_ed25519.pub)"
+printf '\033]52;c;%s\007' "$(base64 < ~/.ssh/id_rsa.pub)"
 echo "SSH key for Github (already in you system buffer): "
 cat ~/.ssh/id_ed25519.pub
 
@@ -54,10 +56,6 @@ git clone https://github.com/gpakosz/.tmux.git
 ln -s -f .tmux/.tmux.conf
 cp .tmux/.tmux.conf.local .
 echo "export EDITOR='nvim'" | tee -a ~/.bashrc
-
-# Install nvim
-curl -LO https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.deb
-sudo apt install ./nvim-linux64.deb
 
 # Install Python 3.11 from a repository
 sudo apt install software-properties-common -y
@@ -77,15 +75,30 @@ sudo apt install python3.11 -y
 # make
 # sudo make install
 
+# Install nvim
+sudo add-apt-repository universe
+sudo apt install libfuse2 -y
+curl -LO https://github.com/neovim/neovim/releases/download/stable/nvim.appimage
+chmod u+x nvim.appimage
+./nvim.appimage --appimage-extract
+./squashfs-root/AppRun --version
+
+# Optional: exposing nvim globally.
+sudo mv squashfs-root /
+sudo ln -s /squashfs-root/AppRun /usr/bin/nvim
+
+# Optional: install nvim config
+mkdir -p ~/.config/nvim
+git clone https://github.com/nvim-lua/kickstart.nvim.git ~/.config/nvim
+sudo mkdir -p /root/.config/
+sudo ln -s ~/.config/nvim /root/.config/nvim
+
 # Clean up
 sudo apt autoremove -y
 sudo apt autoclean
-
-# SSH key generation
-# ssh-keygen
+rm nvim.appimage
 
 # Configure access to a remote server by SSH
-
 while true; do
 read -p "Do you want to configure remote access to a remote server by SSH? (y/N): " choice
 
