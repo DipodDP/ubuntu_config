@@ -39,7 +39,7 @@ sudo apt install gcc -y
 read -p "What is your GIT email?: " git_email
 git config --global user.email "$git_email"
 read -p "What is your GIT name?: " git_name
-git config --global user.email "$git_name"
+git config --global user.name "$git_name"
 git config --global alias.st status
 git config --global alias.unstage 'reset HEAD --'
 
@@ -62,6 +62,13 @@ sudo apt install software-properties-common -y
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
 sudo apt install python3.11 -y
+
+#Install Node.js
+curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - &&\
+sudo apt install -y nodejs
+
+# Install LSP
+sudo npm i -g pyright
 
 # Install from a download link
 # wget download-link
