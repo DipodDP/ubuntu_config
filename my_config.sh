@@ -1,5 +1,5 @@
 #!/bin/bash
-
+cd
 # Creating user
 while true; do
 read -p "Do you want to create admin users? (y/N): " choice
@@ -18,8 +18,11 @@ sudo apt update
 sudo apt upgrade -y
 
 # Bash settings
-echo "alias cls='clear'" | tee -a ~/.bash_aliases
-echo "alias bat='batcat'" | tee -a ~/.bash_aliases
+if ! grep -q -E -e "cls=|bat=|tree=" ~/.zshrc; then 
+  echo "alias cls='clear'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
+  echo "alias bat='batcat'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
+  echo "alias tree='exa -lF --tree --icons'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
+fi
 
 # install utils
 sudo apt install ripgrep -y
@@ -28,34 +31,70 @@ sudo apt install bat -y
 sudo apt install lsof -y
 sudo apt install htop -y
 sudo apt install tmux -y
-sudo apt install tree -y
+# sudo apt install tree -y
+sudo apt install exa -y
 sudo apt install fd-find -y
+
+# install shell features
+sudo apt install zsh -y
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k
+curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+if ! grep -q 'eval "$(zoxide init zsh)"' ~/.zshrc; then 
+  echo 'eval "$(zoxide init zsh)"' | tee -a ~/.zshrc
+fi
+# curl -sS https://starship.rs/install.sh | sh
+# echo 'eval "$(starship init zsh)"' | tee -a ~/.zshrc
+# mkdir -p ~/.config && touch ~/.config/starship.toml
+
+# install Lazygit
+LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+tar xf lazygit.tar.gz lazygit
+sudo install lazygit /usr/local/bin
+
+if ! grep -q "lg()" ~/.zshrc; then 
+echo 'lg()
+{
+    export LAZYGIT_NEW_DIR_FILE=~/.lazygit/newdir
+    lazygit "$@"
+
+    if [ -f $LAZYGIT_NEW_DIR_FILE ]; then
+      cd "$(cat $LAZYGIT_NEW_DIR_FILE)"
+      rm -f $LAZYGIT_NEW_DIR_FILE > /dev/null
+    fi
+}' | tee -a ~/.zshrc
+fi
 
 # install compilers
 sudo apt install make -y
 sudo apt install gcc -y
 
 # GIT config
-read -p "What is your GIT email?: " git_email
-git config --global user.email "$git_email"
-read -p "What is your GIT name?: " git_name
-git config --global user.name "$git_name"
-git config --global alias.st status
-git config --global alias.unstage 'reset HEAD --'
+while true; do
+read -p "Do you want to configure GIT? (y/N): " choice
 
-#SSH key generation
-ssh-keygen -C "$git_email"
+if [ "$choice" = "y" ]; then
+  read -p "What is your GIT email?: " git_email
+  git config --global user.email "$git_email"
+  read -p "What is your GIT name?: " git_name
+  git config --global user.name "$git_name"
+  git config --global alias.st status
+  git config --global alias.unstage 'reset HEAD --'
+fi
+break
 
-printf '\033]52;c;%s\007' "$(base64 < ~/.ssh/id_rsa.pub)"
-echo "SSH key for Github (already in you system buffer): "
-cat ~/.ssh/id_ed25519.pub
+done
 
 # Install Tmux config
 cd
 git clone https://github.com/gpakosz/.tmux.git
 ln -s -f .tmux/.tmux.conf
 cp .tmux/.tmux.conf.local .
-echo "export EDITOR='nvim'" | tee -a ~/.bashrc
+
+if ! grep -q "export EDITOR=" ~/.zshrc; then 
+  echo "export EDITOR='nvim'" | tee -a ~/.bashrc | tee -a ~/.zshrc
+fi
 
 # Install Python 3.11 from a repository
 sudo apt install software-properties-common -y
@@ -104,6 +143,16 @@ sudo ln -s ~/.config/nvim /root/.config/nvim
 sudo apt autoremove -y
 sudo apt autoclean
 rm nvim.appimage
+rm -r squashfs-root
+rm -r lazygit
+rm lazygit.tar.gz
+
+#SSH key generation
+ssh-keygen -C "$git_email"
+
+printf '\033]52;c;%s\007' "$(base64 < ~/.ssh/id_rsa.pub)"
+echo "SSH key for Github (already in you system buffer): "
+cat ~/.ssh/id_ed25519.pub
 
 # Configure access to a remote server by SSH
 while true; do
