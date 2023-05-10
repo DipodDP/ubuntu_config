@@ -17,13 +17,6 @@ done
 sudo apt update
 sudo apt upgrade -y
 
-# Bash settings
-if ! grep -q -E -e "cls=|bat=|tree=" ~/.zshrc; then 
-  echo "alias cls='clear'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
-  echo "alias bat='batcat'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
-  echo "alias tree='exa -lF --tree --icons'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
-fi
-
 # install utils
 sudo apt install ripgrep -y
 sudo apt install netcat -y
@@ -47,14 +40,22 @@ fi
 # echo 'eval "$(starship init zsh)"' | tee -a ~/.zshrc
 # mkdir -p ~/.config && touch ~/.config/starship.toml
 
+# Shell settings
+if ! grep -q -E -e "cls=|bat=|tree=" ~/.zshrc; then 
+  echo "alias cls='clear'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
+  echo "alias bat='batcat'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
+  echo "alias tree='exa -lF --tree --icons'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
+fi
+
 # install Lazygit
 LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
 curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
 tar xf lazygit.tar.gz lazygit
 sudo install lazygit /usr/local/bin
 
-if ! grep -q "lg()" ~/.zshrc; then 
-echo 'lg()
+if ! grep -q "lg()" ~/.zshrc; then
+  echo "alias lg='lazygit'" | tee -a ~/.zshrc
+  echo 'lg()
 {
     export LAZYGIT_NEW_DIR_FILE=~/.lazygit/newdir
     lazygit "$@"
@@ -92,7 +93,12 @@ git clone https://github.com/gpakosz/.tmux.git
 ln -s -f .tmux/.tmux.conf
 cp .tmux/.tmux.conf.local .
 
-if ! grep -q "export EDITOR=" ~/.zshrc; then 
+if ! grep -q "set-clipboard|terminal-features" ~/.tmux.conf.local; then 
+  echo "set -s set-clipboard on" | tee -a ~/.tmux.conf.local
+  echo "set -as terminal-features ',$TERM'" | tee -a ~/.tmux.conf.local
+fi
+
+if ! grep -q "export EDITOR='nvim'" ~/.zshrc; then 
   echo "export EDITOR='nvim'" | tee -a ~/.bashrc | tee -a ~/.zshrc
 fi
 
@@ -135,7 +141,9 @@ sudo ln -s /squashfs-root/AppRun /usr/bin/nvim
 
 # Optional: install nvim config
 mkdir -p ~/.config/nvim
-git clone https://github.com/nvim-lua/kickstart.nvim.git ~/.config/nvim
+# git clone https://github.com/nvim-lua/kickstart.nvim.git ~/.config/nvim
+git clone --depth 1 https://github.com/AstroNvim/AstroNvim ~/.config/nvim
+git clone https://github.com/DipodDP/astro_config.git ~/.config/nvim/lua/user
 sudo mkdir -p /root/.config/
 sudo ln -s ~/.config/nvim /root/.config/nvim
 
