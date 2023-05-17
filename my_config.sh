@@ -70,6 +70,7 @@ fi
 # install compilers
 sudo apt install make -y
 sudo apt install gcc -y
+sudo apt install g++ -y
 
 # GIT config
 while true; do
