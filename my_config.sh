@@ -28,9 +28,15 @@ sudo apt install tmux -y
 sudo apt install exa -y
 sudo apt install fd-find -y
 
+# install compilers
+sudo apt install make -y
+sudo apt install gcc -y
+sudo apt install g++ -y
+
 # install shell features
 sudo apt install zsh -y
 sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k
 curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
 if ! grep -q 'eval "$(zoxide init zsh)"' ~/.zshrc; then 
@@ -47,30 +53,29 @@ if ! grep -q -E -e "cls=|bat=|tree=" ~/.zshrc; then
   echo "alias tree='exa -lF --tree --icons'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
 fi
 
-# install Lazygit
-LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
-curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
-tar xf lazygit.tar.gz lazygit
-sudo install lazygit /usr/local/bin
+# Install Tmux config
+cd
+git clone https://github.com/gpakosz/.tmux.git
+ln -s -f .tmux/.tmux.conf
+cp .tmux/.tmux.conf.local .
 
-if ! grep -q "lg()" ~/.zshrc; then
-  echo "alias lg='lazygit'" | tee -a ~/.zshrc
-  echo 'lg()
-{
-    export LAZYGIT_NEW_DIR_FILE=~/.lazygit/newdir
-    lazygit "$@"
-
-    if [ -f $LAZYGIT_NEW_DIR_FILE ]; then
-      cd "$(cat $LAZYGIT_NEW_DIR_FILE)"
-      rm -f $LAZYGIT_NEW_DIR_FILE > /dev/null
-    fi
-}' | tee -a ~/.zshrc
+if ! grep -q "set-clipboard|terminal-features" ~/.tmux.conf.local; then 
+  echo # Settings for clipboard OSC 52 support
+  echo "set -s set-clipboard on" | tee -a ~/.tmux.conf.local
+  echo "set -as terminal-features ',$TERM'" | tee -a ~/.tmux.conf.local
 fi
 
-# install compilers
-sudo apt install make -y
-sudo apt install gcc -y
-sudo apt install g++ -y
+if ! grep -q "export EDITOR='nvim'" ~/.zshrc; then 
+  echo 'export EDITOR="nvim"' | tee -a ~/.bashrc | tee -a ~/.zshrc
+fi
+
+# Install fly.io CLI
+curl -L https://fly.io/install.sh | sh
+
+if ! grep -q "FLYCTL_INSTALL" ~/.zshrc; then 
+  echo 'export FLYCTL_INSTALL="/home/dipoddp/.fly"' | tee -a ~/.bashrc | tee -a ~/.zshrc
+  echo 'export PATH="$FLYCTL_INSTALL/bin:$PATH"' | tee -a ~/.bashrc | tee -a ~/.zshrc
+fi
 
 # GIT config
 while true; do
@@ -88,19 +93,23 @@ break
 
 done
 
-# Install Tmux config
-cd
-git clone https://github.com/gpakosz/.tmux.git
-ln -s -f .tmux/.tmux.conf
-cp .tmux/.tmux.conf.local .
+# install Lazygit
+LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+tar xf lazygit.tar.gz lazygit
+sudo install lazygit /usr/local/bin
 
-if ! grep -q "set-clipboard|terminal-features" ~/.tmux.conf.local; then 
-  echo "set -s set-clipboard on" | tee -a ~/.tmux.conf.local
-  echo "set -as terminal-features ',$TERM'" | tee -a ~/.tmux.conf.local
-fi
+if ! grep -q "lg()" ~/.zshrc; then
+  echo 'lg()
+{
+    export LAZYGIT_NEW_DIR_FILE=~/.lazygit/newdir
+    lazygit "$@"
 
-if ! grep -q "export EDITOR='nvim'" ~/.zshrc; then 
-  echo "export EDITOR='nvim'" | tee -a ~/.bashrc | tee -a ~/.zshrc
+    if [ -f $LAZYGIT_NEW_DIR_FILE ]; then
+      cd "$(cat $LAZYGIT_NEW_DIR_FILE)"
+      rm -f $LAZYGIT_NEW_DIR_FILE > /dev/null
+    fi
+}' | tee -a ~/.zshrc
 fi
 
 # Install Python 3.11 from a repository
@@ -114,7 +123,7 @@ curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - &&\
 sudo apt install -y nodejs
 
 # Install LSP
-sudo npm i -g pyright
+# sudo npm i -g pyright
 
 # Install from a download link
 # wget download-link
