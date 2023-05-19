@@ -118,6 +118,11 @@ sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
 sudo apt install python3.11 -y
 
+# Install Poetry
+curl -sSL https://install.python-poetry.org | python3 -
+mkdir ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/poetry
+poetry completions zsh > ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/poetry/_poetry
+
 #Install Node.js
 curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - &&\
 sudo apt install -y nodejs
