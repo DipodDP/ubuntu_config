@@ -51,6 +51,9 @@ if ! grep -q -E -e "cls=|bat=|tree=" ~/.zshrc; then
   echo "alias cls='clear'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
   echo "alias bat='batcat'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
   echo "alias tree='exa -lF --tree --icons'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
+  echo "alias ls='exa -F --icons'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
+  echo "alias ll='exa -lFhH --icons'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
+  echo "alias la='exa -alFhH --icons'" | tee -a ~/.bash_aliases | tee -a ~/.zshrc
 fi
 
 # Install Tmux config
@@ -71,6 +74,8 @@ fi
 
 # Install fly.io CLI
 curl -L https://fly.io/install.sh | sh
+# For Microsoft WSL users
+sudo ln -s /usr/bin/wslview /usr/local/bin/xdg-open
 
 if ! grep -q "FLYCTL_INSTALL" ~/.zshrc; then 
   echo 'export FLYCTL_INSTALL="/home/dipoddp/.fly"' | tee -a ~/.bashrc | tee -a ~/.zshrc
@@ -117,6 +122,10 @@ sudo apt install software-properties-common -y
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
 sudo apt install python3.11 -y
+sudo apt install python3.11-venv -y
+
+# Install development tools for Python 3.11
+sudo apt install python3.11-dev
 
 # Install Poetry
 curl -sSL https://install.python-poetry.org | python3 -
@@ -150,11 +159,13 @@ chmod u+x nvim.appimage
 ./nvim.appimage --appimage-extract
 ./squashfs-root/AppRun --version
 
-# Optional: exposing nvim globally.
-sudo mv squashfs-root /
-sudo ln -s /squashfs-root/AppRun /usr/bin/nvim
+# Exposing nvim globally.
+sudo rm -r /squashfs-root/nvim
+sudo mkdir /squashfs-root
+sudo mv squashfs-root /squashfs-root/nvim
+sudo ln -s /squashfs-root/nvim/AppRun /usr/bin/nvim
 
-# Optional: install nvim config
+# Install nvim config
 mkdir -p ~/.config/nvim
 # git clone https://github.com/nvim-lua/kickstart.nvim.git ~/.config/nvim
 git clone --depth 1 https://github.com/AstroNvim/AstroNvim ~/.config/nvim
