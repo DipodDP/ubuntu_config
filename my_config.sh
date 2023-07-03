@@ -24,7 +24,6 @@ sudo apt install bat -y
 sudo apt install lsof -y
 sudo apt install htop -y
 sudo apt install tmux -y
-# sudo apt install tree -y
 sudo apt install exa -y
 sudo apt install fd-find -y
 
@@ -38,10 +37,22 @@ sudo apt install zsh -y
 sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k
+
+if ! grep -q ".local/bin" ~/.zprofile; then
+  echo 'if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
+fi
+
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi' | tee -a ~/.zprofile
+fi
+
 curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
 if ! grep -q 'eval "$(zoxide init zsh)"' ~/.zshrc; then 
   echo 'eval "$(zoxide init zsh)"' | tee -a ~/.zshrc
 fi
+
 # curl -sS https://starship.rs/install.sh | sh
 # echo 'eval "$(starship init zsh)"' | tee -a ~/.zshrc
 # mkdir -p ~/.config && touch ~/.config/starship.toml
@@ -125,7 +136,7 @@ sudo apt install python3.11 -y
 sudo apt install python3.11-venv -y
 
 # Install development tools for Python 3.11
-sudo apt install python3.11-dev
+sudo apt install python3.11-dev -y
 
 # Install Poetry
 curl -sSL https://install.python-poetry.org | python3 -
@@ -218,4 +229,3 @@ break
 done
 
 echo "Installation completed!"
-
