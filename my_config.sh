@@ -26,6 +26,7 @@ sudo apt install htop -y
 sudo apt install tmux -y
 sudo apt install exa -y
 sudo apt install fd-find -y
+sudo apt install unzip -y
 
 # install compilers
 sudo apt install make -y
@@ -182,7 +183,7 @@ mkdir -p ~/.config/nvim
 git clone --depth 1 https://github.com/AstroNvim/AstroNvim ~/.config/nvim
 git clone https://github.com/DipodDP/astro_config.git ~/.config/nvim/lua/user
 sudo mkdir -p /root/.config/
-sudo ln -s ~/.config/nvim /root/.config/nvim
+sudo ln -s ~/.config/nvim /root/.config/
 
 # Clean up
 sudo apt autoremove -y
