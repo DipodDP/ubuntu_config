@@ -80,7 +80,11 @@ if ! grep -q "set-clipboard|terminal-features" ~/.tmux.conf.local; then
   echo "set -as terminal-features ',$TERM'" | tee -a ~/.tmux.conf.local
 fi
 
-if ! grep -q "export EDITOR='nvim'" ~/.zshrc; then 
+if ! grep -q "session()" ~/.zshrc; then 
+  echo 'session() { sh ~/projects/tmux_sessions/$1.sh }' | tee -a ~/.bashrc | tee -a ~/.zshrc
+fi
+
+if ! grep -q "export EDITOR" ~/.zshrc; then 
   echo 'export EDITOR="nvim"' | tee -a ~/.bashrc | tee -a ~/.zshrc
 fi
 
@@ -90,7 +94,7 @@ curl -L https://fly.io/install.sh | sh
 sudo ln -s /usr/bin/wslview /usr/local/bin/xdg-open
 
 if ! grep -q "FLYCTL_INSTALL" ~/.zshrc; then 
-  echo 'export FLYCTL_INSTALL="/home/dipoddp/.fly"' | tee -a ~/.bashrc | tee -a ~/.zshrc
+  echo 'export FLYCTL_INSTALL="~/.fly"' | tee -a ~/.bashrc | tee -a ~/.zshrc
   echo 'export PATH="$FLYCTL_INSTALL/bin:$PATH"' | tee -a ~/.bashrc | tee -a ~/.zshrc
 fi
 
@@ -144,10 +148,16 @@ curl -sSL https://install.python-poetry.org | python3 -
 mkdir ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/poetry
 poetry completions zsh > ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/poetry/_poetry
 
-#Install Node.js
-curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - &&\
-sudo apt install -y nodejs
-
+#Install Node.js and pnpm
+sudo apt-get install -y ca-certificates curl gnupg
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+NODE_MAJOR=21
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+sudo apt-get update
+sudo apt-get install nodejs -y
+sudo npm install -g npm@latest
+sudo npm install -g pnpm
 # Install LSP
 # sudo npm i -g pyright
 
