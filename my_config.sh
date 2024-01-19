@@ -19,7 +19,7 @@ sudo apt upgrade -y
 
 # install utils
 sudo apt install ripgrep -y
-sudo apt install netcat -y
+sudo apt install netcat-traditional -y
 sudo apt install bat -y
 sudo apt install lsof -y
 sudo apt install htop -y
