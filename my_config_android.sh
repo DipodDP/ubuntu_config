@@ -39,6 +39,11 @@ sudo apt install g++ -y
 
 # install shell features
 sudo apt install zsh -y
+
+# Can't run sudo, so we should set it if running on Android without Termux.
+if [[ -z "$PREFIX" ]]; then
+    export PREFIX="com.termux"
+fi
 sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/themes/powerlevel10k
@@ -128,7 +133,7 @@ done
 
 # install Lazygit
 LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
-curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_arm64.tar.gz"
 tar xf lazygit.tar.gz lazygit
 sudo install lazygit /usr/local/bin
 
@@ -180,10 +185,11 @@ sudo npm install -g pnpm
 # make
 # sudo make install
 
-# Install nvim
+# Install (reisntall) nvim
 sudo add-apt-repository universe
 sudo apt install libfuse2 -y
-curl -LO https://github.com/neovim/neovim/releases/download/stable/nvim.appimage
+NVIM_VERSION=$(curl -s "https://api.github.com/repos/matsuu/neovim-aarch64-appimage/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+curl -Lo nvim.appimage "https://github.com/matsuu/neovim-aarch64-appimage/releases/latest/download/nvim-v${NVIM_VERSION}-aarch64.appimage"
 chmod u+x nvim.appimage
 ./nvim.appimage --appimage-extract
 ./squashfs-root/AppRun --version
@@ -195,12 +201,12 @@ sudo mv squashfs-root /squashfs-root/nvim
 sudo ln -s /squashfs-root/nvim/AppRun /usr/bin/nvim
 
 # Install nvim config
-mkdir -p ~/.config/nvim
+# mkdir -p ~/.config/nvim
 # git clone https://github.com/nvim-lua/kickstart.nvim.git ~/.config/nvim
-git clone --depth 1 https://github.com/AstroNvim/AstroNvim ~/.config/nvim
-git clone https://github.com/DipodDP/astro_config.git ~/.config/nvim/lua/user
-sudo mkdir -p /root/.config/
-sudo ln -s ~/.config/nvim /root/.config/
+# git clone --depth 1 https://github.com/AstroNvim/AstroNvim ~/.config/nvim
+# git clone https://github.com/DipodDP/astro_config.git ~/.config/nvim/lua/user
+# sudo mkdir -p /root/.config/
+# sudo ln -s ~/.config/nvim /root/.config/
 
 # Clean up
 sudo apt autoremove -y
