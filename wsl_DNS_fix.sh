@@ -8,7 +8,7 @@ if ! \$(cat /etc/hosts | grep -q 'winhost'); then
 fi
 
 
-if ! \$(cat /etc/resolv.conf | grep -q '.zshrc'); then
+if ! \$(cat /etc/resolv.conf | grep -q '.zprofile'); then
   echo 'Adding DNS entry in /etc/resolv.conf'
   echo '\n# DNS entry - added via ~/.zprofile' | sudo tee -a /etc/resolv.conf
   echo \"nameserver 1.1.1.1
