@@ -98,7 +98,7 @@ if ! grep -q "set-clipboard|terminal-features" ~/.tmux.conf.local; then
 fi
 
 if ! grep -q "session()" ~/.zshrc; then 
-  echo 'session() { sh ~/projects/tmux_sessions/$1.sh }' | tee -a ~/.bashrc | tee -a ~/.zshrc
+  echo 'session() { sh ~/projects/tmux-sessions/$1.sh }' | tee -a ~/.bashrc | tee -a ~/.zshrc
 fi
 
 if ! grep -q "export EDITOR" ~/.zshrc; then 
