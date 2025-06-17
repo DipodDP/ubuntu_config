@@ -149,11 +149,11 @@ fi
 sudo apt install software-properties-common -y
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
-sudo apt install python3.11 -y
-sudo apt install python3.11-venv -y
+sudo apt install python3.13 -y
+sudo apt install python3.13-venv -y
 
 # Install development tools for Python 3.11
-sudo apt install python3.11-dev -y
+sudo apt install python3.13-dev -y
 
 # Install Poetry
 curl -sSL https://install.python-poetry.org | python3 -
