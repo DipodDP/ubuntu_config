@@ -183,9 +183,9 @@ sudo npm install -g pnpm
 # Install nvim
 sudo add-apt-repository universe
 sudo apt install libfuse2 -y
-curl -LO https://github.com/neovim/neovim/releases/download/stable/nvim.appimage
-chmod u+x nvim.appimage
-./nvim.appimage --appimage-extract
+curl -LO https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.appimage
+chmod u+x nvim-linux-x86_64.appimage
+./nvim-linux-x86_64.appimage --appimage-extract
 ./squashfs-root/AppRun --version
 
 # Exposing nvim globally.
@@ -197,15 +197,15 @@ sudo ln -s /squashfs-root/nvim/AppRun /usr/bin/nvim
 # Install nvim config
 mkdir -p ~/.config/nvim
 # git clone https://github.com/nvim-lua/kickstart.nvim.git ~/.config/nvim
-git clone --depth 1 https://github.com/AstroNvim/AstroNvim ~/.config/nvim
-git clone https://github.com/DipodDP/astro_config.git ~/.config/nvim/lua/user
+# git clone --depth 1 https://github.com/AstroNvim/AstroNvim ~/.config/nvim
+# git clone https://github.com/DipodDP/astro_config.git ~/.config/nvim/lua/user
 sudo mkdir -p /root/.config/
 sudo ln -s ~/.config/nvim /root/.config/
 
 # Clean up
 sudo apt autoremove -y
 sudo apt autoclean
-rm nvim.appimage
+rm nvim-linux-x86_64.appimage
 rm -r squashfs-root
 rm -r lazygit
 rm lazygit.tar.gz
