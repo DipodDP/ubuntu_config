@@ -163,6 +163,7 @@ poetry completions zsh > ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/poetry/_poet
 #Install Node.js and pnpm
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - &&\
 sudo apt-get install -y nodejs
+sudo npm install -g npm@latest
 sudo npm install -g pnpm
 
 # Install LSP
@@ -183,7 +184,7 @@ sudo npm install -g pnpm
 # Install nvim
 sudo add-apt-repository universe
 sudo apt install libfuse2 -y
-curl -LO https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.appimage
+curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.appimage
 chmod u+x nvim-linux-x86_64.appimage
 ./nvim-linux-x86_64.appimage --appimage-extract
 ./squashfs-root/AppRun --version
