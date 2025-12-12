@@ -455,6 +455,166 @@ Optional Fish shell configuration:
 - Integrates with pyenv, fnm, zoxide
 - Optionally installs Fisher plugin manager
 
+### macos_sibling_user_setup.sh
+Multi-user environment setup script:
+- Creates a second "sibling" user account (optional)
+- Sets up shared group and directory structure
+- Safely shares development tools and configs
+- Copies SSH keys (never symlinks them)
+- Uses macOS ACLs for fine-grained permissions
+- Follows security best practices from Linux experience
+
+## Multi-User Setup Guide
+
+If you need to share your development environment between two macOS users (e.g., personal and work accounts, or collaborating with another developer), use the sibling user setup script.
+
+### Quick Start
+
+```bash
+# Run as the primary user with sudo
+sudo ./macos_sibling_user_setup.sh
+```
+
+### What It Does
+
+1. **Creates Sibling User** (optional)
+   - Creates a new macOS user account
+   - Sets up home directory
+   - Optionally grants admin privileges
+
+2. **Shared Group & Directory**
+   - Creates custom group: `devshared`
+   - Adds both users to the group
+   - Creates `/Users/Shared/dev` for shared projects
+   - Sets up proper ACLs and permissions
+
+3. **Shared Development Tools**
+   - Shares `.local/bin`, `.local/lib`, `.local/share`
+   - Tools installed by primary user become available to sibling
+   - Uses symlinks with proper ACL protection
+
+4. **Shared Configurations** (safe subset)
+   - `.zshrc` - Shell configuration
+   - `.oh-my-zsh` - Zsh framework
+   - `.p10k.zsh` - Powerlevel10k theme
+   - `.tmux` / `.tmux.conf` - Terminal multiplexer
+   - Custom list configurable in script
+
+5. **SSH Keys - Copied Safely**
+   - **Never symlinks** `.ssh` directory
+   - Copies all SSH keys with correct ownership
+   - Sets strict permissions (700 for dir, 600 for keys)
+   - Removes ACLs that interfere with SSH
+
+### Safety Rules (Critical!)
+
+#### ❌ NEVER Symlink:
+- `.ssh` directory or files
+- Entire `.local` directory
+- Entire `.config` directory
+- Keychain or credential files
+- Any security-sensitive files
+
+#### ✅ Safe to Symlink:
+- Project folders in shared directory
+- `.local/bin`, `.local/lib`, `.local/share` (with ACLs)
+- Shell configs without secrets
+- Development tool configs
+
+#### ✅ Must Copy (Not Symlink):
+- `.ssh` and all keys
+- Credentials and API tokens
+- Personal `.gitconfig` with email
+
+### Usage Example
+
+```bash
+# 1. Run main setup on primary user
+./macos_config.sh
+
+# 2. Create and configure sibling user
+sudo ./macos_sibling_user_setup.sh
+
+# 3. Log in as sibling user
+su - dpdev
+
+# 4. Run development setup for sibling user
+cd /Users/dp/ubuntu_config
+./macos_config.sh
+
+# 5. Verify everything works
+ssh -T git@github.com
+which python
+which node
+cd ~/shared_projects
+```
+
+### Customization
+
+Edit the script variables at the top:
+
+```bash
+PRIMARY_USER="dp"              # Your main user
+SIBLING_USER="dpdev"           # Second user name
+SHARED_GROUP="devshared"       # Group name
+SHARED_DIR="/Users/Shared/dev" # Shared directory
+
+# Add/remove configs to share
+CONFIGS_TO_LINK=(
+  ".zshrc"
+  ".oh-my-zsh"
+  ".p10k.zsh"
+  ".tmux.conf"
+  # Add your own...
+)
+```
+
+### Troubleshooting
+
+**SSH "Bad owner or permissions" error**:
+```bash
+# Fix .ssh permissions
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/*
+chmod 644 ~/.ssh/*.pub
+```
+
+**Can't access shared directory**:
+```bash
+# Check group membership
+groups
+
+# Re-login to activate group
+exit
+su - dpdev
+```
+
+**Primary user's tools not visible**:
+```bash
+# Check .local symlinks
+ls -la ~/.local/bin ~/.local/lib ~/.local/share
+
+# Verify ACLs
+ls -led ~/.local/bin
+```
+
+**Permission denied on shared projects**:
+```bash
+# Check shared directory permissions
+ls -led /Users/Shared/dev
+
+# Verify group membership
+dseditgroup -o checkmember -m dpdev devshared
+```
+
+### macOS-Specific Notes
+
+1. **ACL Syntax**: macOS uses `chmod +a` instead of Linux `setfacl`
+2. **User IDs**: Must be ≥501 (1-500 reserved for system)
+3. **Default Group**: All users belong to `staff` (gid=20)
+4. **Shared Location**: `/Users/Shared/` (not `/home/shared`)
+5. **Shell**: Default is `zsh` (not bash)
+
 ## License
 
 Same as parent repository.
