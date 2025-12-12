@@ -109,7 +109,6 @@ if [[ "$SOCKS_ENABLE" == "1" ]]; then
 
   if [[ -n "$SOCKS_HOST" ]] && [[ -n "$SOCKS_PORT" ]]; then
     export all_proxy="socks5://${SOCKS_HOST}:${SOCKS_PORT}"
-    echo "✓ SOCKS proxy enabled: ${SOCKS_HOST}:${SOCKS_PORT}"
   fi
 fi
 EOF
