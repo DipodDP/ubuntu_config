@@ -7,6 +7,8 @@ if [ "$1" = "--silent" ] || [ "$1" = "all" ]; then
   echo "Running in silent mode, will install all tools without prompting."
 fi
 
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+
 cd
 
 echo "macOS Development Environment Setup"
@@ -373,11 +375,22 @@ EOF
   eval "$(pyenv init -)"
   eval "$(pyenv virtualenv-init -)"
 
-  echo "Installing Python 3.12..."
-  pyenv install -s 3.12
-  pyenv global 3.12
+  echo "Installing Python 3.13..."
+  pyenv install -s 3.13
+  pyenv global 3.13
 
-  echo "Python 3.12 installed and set as global version"
+  echo "Python 3.13 installed and set as global version"
+
+  # Configure Google Cloud SDK to use the pyenv Python
+  PYENV_PYTHON_PATH=$(pyenv which python)
+  if ! grep -q "CLOUDSDK_PYTHON" ~/.zshrc; then
+      echo "" >> ~/.zshrc
+      echo "# Set Python for Google Cloud SDK" >> ~/.zshrc
+      echo "export CLOUDSDK_PYTHON=$PYENV_PYTHON_PATH" >> ~/.zshrc
+  else
+      sed -i.bak "s|export CLOUDSDK_PYTHON=.*|export CLOUDSDK_PYTHON=$PYENV_PYTHON_PATH|" ~/.zshrc
+  fi
+  echo "gcloud CLI configured to use Python 3.13."
 
   # Install pipx for CLI tools
   brew install pipx
@@ -471,37 +484,61 @@ if [ "$choice_rust" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
   cargo --version
 fi
 
-# Gemini CLI setup
+
+
+# Gemini Account Switcher Setup
 echo ""
 choice_gemini="n"
 if [ "$SILENT_MODE" = "false" ]; then
-    read -p "Do you want to set up Google Gemini CLI? (y/N): " choice_gemini
+    read -p "Do you want to set up Gemini Account Switcher? (y/N): " choice_gemini
 fi
 if [ "$choice_gemini" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
-  echo "Installing Google Gemini CLI..."
+  echo "Setting up Gemini Account Switcher..."
+  echo ""
+  echo "This allows you to switch between multiple Gemini accounts by swapping"
+  echo "OAuth credentials. No Google Cloud SDK required!"
+  echo ""
 
-  # Install via Homebrew
-  if ! command -v gemini &>/dev/null; then
-    brew install google-gemini-cli
-  else
-    echo "Google Gemini CLI already installed."
+  # Copy the script to the home directory
+  cp "$SCRIPT_DIR/gemini_account_switcher.sh" ~/
+  chmod +x ~/gemini_account_switcher.sh
+
+  # Create a default .gemini_accounts file if it doesn't exist
+  if [ ! -f ~/.gemini_accounts ]; then
+    cat > ~/.gemini_accounts <<'EOF'
+GEMINI_ACCOUNT_1="your_account_1@example.com"
+GEMINI_PROJECT_1="your_project_id_1"
+GEMINI_ACCOUNT_2="your_account_2@example.com"
+GEMINI_PROJECT_2="your_project_id_2"
+EOF
+    echo "Created ~/.gemini_accounts - update it with your account emails and project IDs"
   fi
 
-  echo "Google Gemini CLI installed successfully."
+  # Source the script in .zshrc
+  if ! grep -q "gemini_account_switcher.sh" ~/.zshrc; then
+    cat >> ~/.zshrc <<'EOF'
 
-  if [ "$SILENT_MODE" = "false" ]; then
-    read -p "Enter your GOOGLE_CLOUD_PROJECT ID: " gcp_project
-    if [ -n "$gcp_project" ]; then
-      if ! grep -q "GOOGLE_CLOUD_PROJECT" ~/.zshrc; then
-        echo "" >> ~/.zshrc
-        echo "# Google Cloud Project for Gemini" >> ~/.zshrc
-        echo "export GOOGLE_CLOUD_PROJECT=$gcp_project" >> ~/.zshrc
-      else
-        sed -i.bak "s/export GOOGLE_CLOUD_PROJECT=.*/export GOOGLE_CLOUD_PROJECT=$gcp_project/" ~/.zshrc
-      fi
-      echo "GOOGLE_CLOUD_PROJECT exported to ~/.zshrc."
-    fi
+# Gemini Account Switcher
+source ~/gemini_account_switcher.sh
+alias gemini-switch='switch_gemini_account'
+alias gemini-status='gemini_account_status'
+alias gemini-backup='gemini_backup_creds'
+EOF
   fi
+
+  echo ""
+  echo "Gemini Account Switcher setup complete!"
+  echo ""
+  echo "Setup Instructions:"
+  echo "1. Edit ~/.gemini_accounts with your account emails"
+  echo "2. For each account:"
+  echo "   a. Login: gemini auth login"
+  echo "   b. Backup credentials: gemini-backup 1  (or 2 for second account)"
+  echo ""
+  echo "Usage:"
+  echo "  gemini-switch [1|2]  - Switch between accounts"
+  echo "  gemini-status        - Show current active account"
+  echo "  gemini-backup [1|2]  - Backup current credentials"
 fi
 
 # GIT configuration
