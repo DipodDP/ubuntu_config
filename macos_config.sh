@@ -1,5 +1,12 @@
 #!/bin/bash
 set -e
+
+SILENT_MODE=false
+if [ "$1" = "--silent" ] || [ "$1" = "all" ]; then
+  SILENT_MODE=true
+  echo "Running in silent mode, will install all tools without prompting."
+fi
+
 cd
 
 echo "macOS Development Environment Setup"
@@ -20,10 +27,16 @@ echo ""
 # Install Xcode Command Line Tools
 echo "Installing Xcode Command Line Tools..."
 if ! xcode-select -p &>/dev/null; then
-  xcode-select --install
-  echo "Please complete the Xcode Command Line Tools installation in the dialog,"
-  echo "then press Enter to continue..."
-  read -r
+  if [ "$SILENT_MODE" = "true" ]; then
+    echo "Error: Xcode Command Line Tools are not installed. Cannot proceed in silent mode."
+    echo "Please install them manually by running 'xcode-select --install' and run this script again."
+    exit 1
+  else
+    xcode-select --install
+    echo "Please complete the Xcode Command Line Tools installation in the dialog,"
+    echo "then press Enter to continue..."
+    read -r
+  fi
 else
   echo "Xcode Command Line Tools already installed"
 fi
@@ -90,13 +103,10 @@ if [[ "$HTTP_ENABLE" == "1" ]]; then
 
   if [[ -n "$HTTP_HOST" ]] && [[ -n "$HTTP_PORT" ]]; then
     export http_proxy="http://${HTTP_HOST}:${HTTP_PORT}"
-    export https_proxy="http://${HTTP_HOST}:${HTTP_PORT}"
-    echo "✓ Proxy enabled: ${HTTP_HOST}:${HTTP_PORT}"
   fi
 else
   # Proxy disabled in system settings
   unset http_proxy
-  unset https_proxy
   unset all_proxy
 fi
 
@@ -181,14 +191,12 @@ EOF
 # Functions to enable/disable v2rayA proxy
 v2ray_proxy_on() {
   export http_proxy=http://127.0.0.1:20172
-  export https_proxy=http://127.0.0.1:20172
   export all_proxy=socks5://127.0.0.1:20170
   echo "✓ v2rayA proxy enabled (with shunt rules)"
 }
 
 v2ray_proxy_off() {
   unset http_proxy
-  unset https_proxy
   unset all_proxy
   echo "✓ v2rayA proxy disabled"
 }
@@ -196,7 +204,6 @@ v2ray_proxy_off() {
 # Alias for basic proxy without shunt rules
 v2ray_proxy_basic() {
   export http_proxy=http://127.0.0.1:20171
-  export https_proxy=http://127.0.0.1:20171
   export all_proxy=socks5://127.0.0.1:20170
   echo "✓ v2rayA basic proxy enabled (no shunt rules)"
 }
@@ -249,15 +256,6 @@ brew install tmux unzip gpg
 
 # Install build tools
 brew install make gcc
-
-# Install iTerm2
-echo ""
-read -p "Do you want to install iTerm2? (y/N): " choice
-if [ "$choice" = "y" ]; then
-  brew install --cask iterm2
-  echo "iTerm2 installed. You can configure it later from:"
-  echo "  Settings → Profiles → Text → Font → MesloLGS NF"
-fi
 
 # Install Nerd Font
 echo ""
@@ -348,8 +346,11 @@ fi
 
 # Python environment setup with pyenv
 echo ""
-read -p "Do you want to set up Python with pyenv? (y/N): " choice
-if [ "$choice" = "y" ]; then
+choice_python="n"
+if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to set up Python with pyenv? (y/N): " choice_python
+fi
+if [ "$choice_python" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
   echo "Installing pyenv and dependencies..."
   brew install pyenv pyenv-virtualenv
   brew install openssl readline sqlite3 xz zlib tcl-tk
@@ -373,7 +374,7 @@ EOF
   eval "$(pyenv virtualenv-init -)"
 
   echo "Installing Python 3.12..."
-  pyenv install 3.12 || echo "Python 3.12 already installed"
+  pyenv install -s 3.12
   pyenv global 3.12
 
   echo "Python 3.12 installed and set as global version"
@@ -384,8 +385,11 @@ EOF
 
   # Install uv (fast Python package installer)
   echo ""
-  read -p "Do you want to install uv (fast Python package installer)? (y/N): " uv_choice
-  if [ "$uv_choice" = "y" ]; then
+  uv_choice="n"
+  if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to install uv (fast Python package installer)? (y/N): " uv_choice
+  fi
+  if [ "$uv_choice" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
     echo "Installing uv..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
 
@@ -408,8 +412,11 @@ fi
 
 # Node.js environment setup with fnm
 echo ""
-read -p "Do you want to set up Node.js with fnm? (y/N): " choice
-if [ "$choice" = "y" ]; then
+choice_node="n"
+if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to set up Node.js with fnm? (y/N): " choice_node
+fi
+if [ "$choice_node" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
   echo "Installing fnm (Fast Node Manager)..."
   brew install fnm
 
@@ -435,8 +442,11 @@ fi
 
 # Rust environment setup with rustup
 echo ""
-read -p "Do you want to set up Rust with rustup? (y/N): " choice
-if [ "$choice" = "y" ]; then
+choice_rust="n"
+if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to set up Rust with rustup? (y/N): " choice_rust
+fi
+if [ "$choice_rust" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
   echo "Installing Rust with rustup..."
 
   if ! command -v rustc &>/dev/null; then
@@ -461,18 +471,53 @@ if [ "$choice" = "y" ]; then
   cargo --version
 fi
 
-# GIT configuration
+# Gemini CLI setup
 echo ""
-read -p "Do you want to configure Git? (y/N): " choice
-if [ "$choice" = "y" ]; then
-  read -p "What is your Git email?: " git_email
-  git config --global user.email "$git_email"
-  read -p "What is your Git name?: " git_name
-  git config --global user.name "$git_name"
-  git config --global alias.st status
-  git config --global alias.unstage 'reset HEAD --'
+choice_gemini="n"
+if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to set up Google Gemini CLI? (y/N): " choice_gemini
+fi
+if [ "$choice_gemini" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
+  echo "Installing Google Gemini CLI..."
 
-  echo "Git configured successfully"
+  # Install via Homebrew
+  if ! command -v gemini &>/dev/null; then
+    brew install google-gemini-cli
+  else
+    echo "Google Gemini CLI already installed."
+  fi
+
+  echo "Google Gemini CLI installed successfully."
+
+  if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Enter your GOOGLE_CLOUD_PROJECT ID: " gcp_project
+    if [ -n "$gcp_project" ]; then
+      if ! grep -q "GOOGLE_CLOUD_PROJECT" ~/.zshrc; then
+        echo "" >> ~/.zshrc
+        echo "# Google Cloud Project for Gemini" >> ~/.zshrc
+        echo "export GOOGLE_CLOUD_PROJECT=$gcp_project" >> ~/.zshrc
+      else
+        sed -i.bak "s/export GOOGLE_CLOUD_PROJECT=.*/export GOOGLE_CLOUD_PROJECT=$gcp_project/" ~/.zshrc
+      fi
+      echo "GOOGLE_CLOUD_PROJECT exported to ~/.zshrc."
+    fi
+  fi
+fi
+
+# GIT configuration
+if [ "$SILENT_MODE" = "false" ]; then
+    echo ""
+    read -p "Do you want to configure Git? (y/N): " choice_git
+    if [ "$choice_git" = "y" ]; then
+      read -p "What is your Git email?: " git_email
+      git config --global user.email "$git_email"
+      read -p "What is your Git name?: " git_name
+      git config --global user.name "$git_name"
+      git config --global alias.st status
+      git config --global alias.unstage 'reset HEAD --'
+
+      echo "Git configured successfully"
+    fi
 fi
 
 # Install Lazygit
@@ -499,8 +544,11 @@ fi
 
 # Development tools
 echo ""
-read -p "Do you want to install VS Code? (y/N): " choice
-if [ "$choice" = "y" ]; then
+choice_vscode="n"
+if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to install VS Code? (y/N): " choice_vscode
+fi
+if [ "$choice_vscode" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
   brew install --cask visual-studio-code
 
   # Enable key repeat for Vim mode
@@ -510,8 +558,11 @@ if [ "$choice" = "y" ]; then
 fi
 
 echo ""
-read -p "Do you want to install Cursor? (y/N): " choice
-if [ "$choice" = "y" ]; then
+choice_cursor="n"
+if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to install Cursor? (y/N): " choice_cursor
+fi
+if [ "$choice_cursor" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
   brew install --cask cursor
 
   # Enable key repeat for Vim mode
@@ -522,8 +573,11 @@ fi
 
 # Productivity tools
 echo ""
-read -p "Do you want to install productivity tools? (Rectangle, Raycast, Maccy, Karabiner-Elements) (y/N): " choice
-if [ "$choice" = "y" ]; then
+choice_productivity="n"
+if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to install productivity tools? (Rectangle, Raycast, Maccy, Karabiner-Elements) (y/N): " choice_productivity
+fi
+if [ "$choice_productivity" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
   echo "Installing productivity tools..."
   brew install --cask rectangle        # Window management
   brew install --cask raycast          # Spotlight replacement
@@ -541,8 +595,11 @@ fi
 
 # macOS system preferences
 echo ""
-read -p "Do you want to configure macOS system preferences for development? (y/N): " choice
-if [ "$choice" = "y" ]; then
+choice_macos_prefs="n"
+if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to configure macOS system preferences for development? (y/N): " choice_macos_prefs
+fi
+if [ "$choice_macos_prefs" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
   echo "Configuring system preferences..."
 
   # Show hidden files in Finder
@@ -571,86 +628,96 @@ if [ "$choice" = "y" ]; then
 fi
 
 # SSH key generation
-echo ""
-read -p "Do you want to generate an SSH key? (y/N): " choice
-if [ "$choice" = "y" ]; then
-  if [ -n "$git_email" ]; then
-    ssh-keygen -t ed25519 -C "$git_email"
-  else
-    read -p "Enter your email for SSH key: " ssh_email
-    ssh-keygen -t ed25519 -C "$ssh_email"
-  fi
+if [ "$SILENT_MODE" = "false" ]; then
+    echo ""
+    read -p "Do you want to generate an SSH key? (y/N): " choice_ssh
+    if [ "$choice_ssh" = "y" ]; then
+      if [ -n "$git_email" ]; then
+        ssh-keygen -t ed25519 -C "$git_email"
+      else
+        read -p "Enter your email for SSH key: " ssh_email
+        ssh-keygen -t ed25519 -C "$ssh_email"
+      fi
 
-  # Add to SSH agent
-  eval "$(ssh-agent -s)"
+      # Add to SSH agent
+      eval "$(ssh-agent -s)"
 
-  # Create SSH config for macOS keychain
-  mkdir -p ~/.ssh
-  chmod 700 ~/.ssh
+      # Create SSH config for macOS keychain
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
 
-  if [ ! -f ~/.ssh/config ]; then
-    cat > ~/.ssh/config <<'EOF'
+      if [ ! -f ~/.ssh/config ]; then
+        cat > ~/.ssh/config <<'EOF'
 Host *
   AddKeysToAgent yes
   UseKeychain yes
   IdentityFile ~/.ssh/id_ed25519
 EOF
-    chmod 600 ~/.ssh/config
-  fi
+        chmod 600 ~/.ssh/config
+      fi
 
-  ssh-add --apple-use-keychain ~/.ssh/id_ed25519
+      ssh-add --apple-use-keychain ~/.ssh/id_ed25519
 
-  echo ""
-  echo "SSH key for GitHub (copied to clipboard):"
-  pbcopy < ~/.ssh/id_ed25519.pub
-  cat ~/.ssh/id_ed25519.pub
-  echo ""
-  echo "The SSH public key has been copied to your clipboard."
-  echo "Add it to GitHub: https://github.com/settings/keys"
+      echo ""
+      echo "SSH key for GitHub (copied to clipboard):"
+      pbcopy < ~/.ssh/id_ed25519.pub
+      cat ~/.ssh/id_ed25519.pub
+      echo ""
+      echo "The SSH public key has been copied to your clipboard."
+      echo "Add it to GitHub: https://github.com/settings/keys"
+    fi
 fi
 
 # Configure SSH access to remote server
-echo ""
-read -p "Do you want to configure SSH access to a remote server? (y/N): " choice
-if [ "$choice" = "y" ]; then
-  read -p "Enter the remote server alias name: " server_name
-  read -p "Enter the remote server IP address: " ip_address
-  read -p "Enter the username for SSH access: " username
-  read -p "Enter the SSH port (default is 22): " ssh_port
+if [ "$SILENT_MODE" = "false" ]; then
+    echo ""
+    read -p "Do you want to configure SSH access to a remote server? (y/N): " choice_remote_ssh
+    if [ "$choice_remote_ssh" = "y" ]; then
+      read -p "Enter the remote server alias name: " server_name
+      read -p "Enter the remote server IP address: " ip_address
+      read -p "Enter the username for SSH access: " username
+      read -p "Enter the SSH port (default is 22): " ssh_port
 
-  # Ensure SSH config directory exists
-  mkdir -p ~/.ssh
-  chmod 700 ~/.ssh
-  touch ~/.ssh/config
-  chmod 600 ~/.ssh/config
+      # Ensure SSH config directory exists
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+      touch ~/.ssh/config
+      chmod 600 ~/.ssh/config
 
-  # Configure SSH access
-  cat >> ~/.ssh/config <<EOF
+      # Configure SSH access
+      cat >> ~/.ssh/config <<EOF
 
 Host $server_name
 	HostName $ip_address
 	User $username
 EOF
 
-  if [ -n "$ssh_port" ]; then
-    echo "	Port $ssh_port" >> ~/.ssh/config
-  fi
+      if [ -n "$ssh_port" ]; then
+        echo "	Port $ssh_port" >> ~/.ssh/config
+      fi
 
-  # Copy SSH key to server
-  ssh-copy-id "$server_name"
-  echo "SSH access has been configured for remote server $ip_address"
+      # Copy SSH key to server
+      ssh-copy-id "$server_name"
+      echo "SSH access has been configured for remote server $ip_address"
+    fi
 fi
 
 # Install Neovim config (optional)
 echo ""
-read -p "Do you want to set up a Neovim configuration? (y/N): " choice
-if [ "$choice" = "y" ]; then
-  echo ""
-  echo "Choose Neovim configuration:"
-  echo "  1. nvscode (VSCode/Cursor compatible)"
-  echo "  2. Empty directory (manual setup)"
-  echo "  3. Skip"
-  read -p "Enter choice [1-3]: " nvim_choice
+choice_neovim_setup="n"
+if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to set up a Neovim configuration? (y/N): " choice_neovim_setup
+fi
+if [ "$choice_neovim_setup" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
+  nvim_choice="1"
+  if [ "$SILENT_MODE" = "false" ]; then
+    echo ""
+    echo "Choose Neovim configuration:"
+    echo "  1. nvscode (VSCode/Cursor compatible)"
+    echo "  2. Empty directory (manual setup)"
+    echo "  3. Skip"
+    read -p "Enter choice [1-3]: " nvim_choice
+  fi
 
   case "$nvim_choice" in
     1)

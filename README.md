@@ -1,42 +1,100 @@
-# Ubuntu dev config
+# Development Environment Configuration Scripts
 
-Basic Ubuntu configuration script for Python development server
+This repository contains a collection of scripts to automate the setup of development environments on Ubuntu and macOS.
 
-## Description
+## Ubuntu Development Environment
 
-This is a shell script that performs several tasks related to system configuration and installation of useful utilities. The script performs the following tasks:
+Basic Ubuntu configuration script for a Python development server.
 
-1. Creates an admin user (if requested) and updates the system.
-2. Sets up some Bash aliases.
-3. Installs various utilities like `ripgrep`, `netcat`, `bat`, `lsof`, `htop`, `tmux`, `lazygit`, `exe`, `fd-find` and other.
-4. Installs compilers like `make` and `gcc`.
-5. Configures GIT with user email and name, and sets up some aliases.
-6. Generates an SSH key and adds it to the system buffer, and configures access to a remote server by SSH.
-7. Installs Python 3.11 from a repository, Node.js, and LSP.
-8. Installs `nvim` and sets up its configuration.
-9. Cleans up the system.
+### Description
+
+This is a shell script (`my_config.sh`) that performs several tasks related to system configuration and installation of useful utilities. The script performs the following tasks:
+
+1.  Creates an admin user (if requested) and updates the system.
+2.  Sets up some Bash aliases.
+3.  Installs various utilities like `ripgrep`, `netcat`, `bat`, `lsof`, `htop`, `tmux`, `lazygit`, `eza`, `fd-find` and other.
+4.  Installs compilers like `make` and `gcc`.
+5.  Configures GIT with user email and name, and sets up some aliases.
+6.  Generates an SSH key and adds it to the system buffer, and configures access to a remote server by SSH.
+7.  Installs Python 3.11 from a repository, Node.js, and LSP.
+8.  Installs `nvim` and sets up its configuration.
+9.  Cleans up the system.
 10. Finally, it notifies the user that the installation is completed.
 
 Note: The script provides some optional tasks: admin user creation and configuring alias for access to a remote server by SSH.
 
-## Installation
+### Installation
 
-Clone repository
-```
-git clone https://github.com/DipodDP/ubuntu_config.git && cd ubuntu_config/
+Clone the repository and navigate into the directory:
+```bash
+git clone https://github.com/DipodDP/ubuntu_config.git
+cd ubuntu_config/
 ```
 
-Run script
-```
+### Usage
+
+To run the main setup script for Ubuntu:
+```bash
 ./my_config.sh
 ```
 
-If you need add alias for ssh connection to server run script
-```
+To configure an SSH connection alias:
+```bash
 ./ssh.sh
 ```
 
-If you need to add DNS servers to correct work WSL via VPN and connect to Windows localhost from WSL with `winhost`, run script
-```
+For WSL users, to fix DNS issues when using a VPN and to connect to the Windows host:
+```bash
 ./wsl_DNS_fix.sh
 ```
+
+---
+
+## macOS Development Environment
+
+A comprehensive setup script for bootstrapping a macOS development environment.
+
+### Description
+
+The main script (`macos_config.sh`) automates the installation and configuration of a wide range of development tools and system preferences on macOS.
+
+Key features include:
+-   **Core Tools**: Installs Homebrew, Git, and essential CLI utilities (`ripgrep`, `fd`, `bat`, `eza`, `neovim`, etc.).
+-   **Shell Environment**: Sets up Zsh with Oh My Zsh, Powerlevel10k theme, and useful plugins (`zsh-autosuggestions`, `zsh-syntax-highlighting`, `zoxide`).
+-   **Development Runtimes**: Configures isolated development environments for Python (with `pyenv`) and Node.js (with `fnm`). Also supports Rust via `rustup` and Go for CLI tools.
+-   **Gemini CLI**: Optionally installs the `gemini-cli` for interacting with Google's Gemini models.
+-   **Editors**: Optionally installs VS Code and/or Cursor, and sets up a Neovim configuration (`nvscode`).
+-   **Productivity Tools**: Optionally installs Rectangle for window management, Raycast as a Spotlight replacement, Maccy for clipboard history, and more.
+-   **System Tweaks**: Optionally configures macOS preferences for a better development experience (e.g., fast key repeat, showing hidden files, freeing up port 5000).
+
+### Usage
+
+First, make the scripts executable:
+```bash
+chmod +x macos_*.sh
+```
+
+To run the interactive setup:
+```bash
+./macos_config.sh
+```
+The script will prompt you for each major section to be installed.
+
+**Silent Mode (unattended installation)**
+
+To run the script in a non-interactive "silent mode" that installs all tools with default settings, use the `--silent` or `all` parameter:
+```bash
+./macos_config.sh --silent
+```
+or
+```bash
+./macos_config.sh all
+```
+In silent mode, user-specific configurations like Git user/email and SSH keys will be skipped.
+
+### Additional Scripts
+
+-   `macos_fish_setup.sh`: Optional setup for the Fish shell.
+-   `macos_remote_access.sh`: Optional setup for remote access using NoMachine and Tailscale.
+
+For more detailed information, including tips for developers new to macOS, see [README_MACOS.md](README_MACOS.md).
