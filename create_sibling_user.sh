@@ -2,11 +2,11 @@
 set -euo pipefail
 
 # ============================================================================
-# Cross-Platform Sibling User Setup Script v3
+# Cross-Platform Sibling User Setup Script v4
 # Works on: Linux (Ubuntu, Debian, etc.) and macOS
 #
 # USAGE:
-#   sudo ./create_sibling_user_v3.sh
+#   sudo ./create_sibling_user.sh
 #   - Auto-detects current user and creates sibling with "dev" suffix
 #   - Provides interactive prompts to customize usernames
 # ============================================================================
@@ -22,10 +22,12 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   OS="macos"
   HOME_BASE="/Users"
   PRIMARY_GROUP="staff"
+  SHARED_PROJECTS="/Users/Shared/dev/projects"
 else
   OS="linux"
   HOME_BASE="/home"
   PRIMARY_GROUP="${USER1}"
+  SHARED_PROJECTS="/home/shared/dev/projects"
 fi
 
 # Initialize paths (will be updated after user configuration)
@@ -175,6 +177,12 @@ echo "  4. Create INDEPENDENT .local/share (for nvim plugins)"
 echo "  5. Copy (NOT symlink) .ssh directory with proper permissions"
 echo "  6. Setup Rust/Cargo sharing (if installed)"
 echo "  7. Apply ACLs for ${USER2} to access ${USER1}'s files"
+echo "  8. Create proper .zshenv for both users (PATH setup)"
+echo "  9. Fix executable permissions (fnm, Node.js, binaries)"
+echo " 10. Create shared ~/projects symlink for both users"
+if [ "$OS" = "macos" ]; then
+echo " 11. Hide ${USER2} from macOS login screen"
+fi
 echo
 read -p "Proceed? [y/N] " yn
 case "$yn" in
@@ -493,25 +501,194 @@ if [ -d "${SRC_HOME}/.oh-my-zsh" ]; then
 fi
 
 # ============================================================================
-# Step 9: Create user-specific .zshrc.local for overrides
+# Step 9: Create proper .zshenv for both users (CRITICAL for PATH)
 # ============================================================================
 
 echo
-echo "Step 9: Creating .zshrc.local for ${USER2}..."
+echo "Step 9: Creating .zshenv for both users..."
 
-cat > "${DST_HOME}/.zshrc.local" << 'EOFZSHLOCAL'
-# User-specific zsh overrides
+# Create .zshenv for USER2
+cat > "${DST_HOME}/.zshenv" << 'EOFZSHENV'
+# Homebrew (macOS)
+if [[ -d "/opt/homebrew/bin" ]]; then
+  export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+fi
+
+# User local binaries
+export PATH="$HOME/.local/bin:$PATH"
+
+# Cargo
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
 # Disable oh-my-zsh insecure directory check
 ZSH_DISABLE_COMPFIX=true
+EOFZSHENV
 
+chown "${USER2}:${PRIMARY_GROUP}" "${DST_HOME}/.zshenv"
+chmod 644 "${DST_HOME}/.zshenv"
+echo "  ✓ Created .zshenv for ${USER2}"
+
+# Update or create .zshenv for USER1 if needed
+if [ ! -f "${SRC_HOME}/.zshenv" ] || ! grep -q "opt/homebrew/bin" "${SRC_HOME}/.zshenv" 2>/dev/null; then
+  echo "  ℹ️  Updating .zshenv for ${USER1}..."
+
+  # Backup existing if present
+  if [ -f "${SRC_HOME}/.zshenv" ]; then
+    cp "${SRC_HOME}/.zshenv" "${SRC_HOME}/.zshenv.bak.$(date +%s)"
+  fi
+
+  cat > "${SRC_HOME}/.zshenv" << 'EOFZSHENV'
+# Homebrew (macOS)
+if [[ -d "/opt/homebrew/bin" ]]; then
+  export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+fi
+
+# User local binaries
+export PATH="$HOME/.local/bin:$PATH"
+
+# Cargo
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+EOFZSHENV
+
+  chown "${USER1}:${PRIMARY_GROUP}" "${SRC_HOME}/.zshenv"
+  chmod 644 "${SRC_HOME}/.zshenv"
+  echo "  ✓ Updated .zshenv for ${USER1}"
+fi
+
+# Create .zshrc.local for USER2 (for additional overrides)
+cat > "${DST_HOME}/.zshrc.local" << 'EOFZSHLOCAL'
+# User-specific zsh overrides
 # Source files if they exist
 [ -f ~/sync-proxy.sh ] && source ~/sync-proxy.sh || true
-[ -f ~/.cargo/env ] && source ~/.cargo/env || true
 EOFZSHLOCAL
 
 chown "${USER2}:${PRIMARY_GROUP}" "${DST_HOME}/.zshrc.local"
 chmod 644 "${DST_HOME}/.zshrc.local"
-echo "  ✓ Created .zshrc.local"
+echo "  ✓ Created .zshrc.local for ${USER2}"
+
+# ============================================================================
+# Step 9a: Fix executable permissions for shared tools
+# ============================================================================
+
+echo
+echo "Step 9a: Ensuring executables have proper permissions..."
+
+# Fix fnm Node.js installations if they exist
+if [ -d "${SRC_HOME}/.local/share/fnm/node-versions" ]; then
+  echo "  ℹ️  Found fnm installations, fixing permissions..."
+
+  # Make all .js files in bin directories executable
+  find "${SRC_HOME}/.local/share/fnm/node-versions" -type f -path "*/bin/*.js" -exec chmod +x {} \; 2>/dev/null || true
+
+  # Ensure the directories are readable
+  find "${SRC_HOME}/.local/share/fnm/node-versions" -type d -exec chmod 755 {} \; 2>/dev/null || true
+
+  # Set ACLs for USER2 to access
+  if [ "$OS" = "macos" ]; then
+    chmod -R +a "user:${USER2} allow read,execute,readattr,readextattr,readsecurity,file_inherit,directory_inherit" "${SRC_HOME}/.local/share/fnm" 2>/dev/null || true
+  else
+    set_acl_recursive "${SRC_HOME}/.local/share/fnm" "${USER2}" "rX"
+  fi
+
+  echo "  ✓ Fixed fnm Node.js permissions"
+fi
+
+# Ensure all executables in .local/bin are executable
+if [ -d "${SRC_HOME}/.local/bin" ]; then
+  find "${SRC_HOME}/.local/bin" -type f -exec chmod +x {} \; 2>/dev/null || true
+  echo "  ✓ Fixed .local/bin executables"
+fi
+
+# ============================================================================
+# Step 10: Create shared projects directory symlinks
+# ============================================================================
+
+echo
+echo "Step 10: Setting up shared projects directory..."
+
+# Ensure shared projects directory exists
+if [ ! -d "$SHARED_PROJECTS" ]; then
+  echo "  ℹ️  Creating shared projects directory: $SHARED_PROJECTS"
+  mkdir -p "$SHARED_PROJECTS"
+
+  # On Linux, create a shared group for both users
+  if [ "$OS" = "linux" ]; then
+    # Create shared group if it doesn't exist
+    if ! getent group shared >/dev/null 2>&1; then
+      groupadd shared
+      echo "  ✓ Created 'shared' group"
+    fi
+
+    # Add both users to shared group
+    usermod -aG shared "$USER1" 2>/dev/null || true
+    usermod -aG shared "$USER2" 2>/dev/null || true
+
+    # Set ownership and permissions
+    chown root:shared "$SHARED_PROJECTS"
+    chmod 2775 "$SHARED_PROJECTS"  # setgid bit for shared group
+    echo "  ✓ Set shared group ownership"
+  else
+    # On macOS, use staff group and proper permissions
+    chown "${USER1}:staff" "$SHARED_PROJECTS"
+    chmod 775 "$SHARED_PROJECTS"
+
+    # Set ACLs for both users
+    chmod +a "user:${USER1} allow list,add_file,search,delete,add_subdirectory,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit" "$SHARED_PROJECTS" 2>/dev/null || true
+    chmod +a "user:${USER2} allow list,add_file,search,delete,add_subdirectory,readattr,writeattr,readextattr,writeextattr,readsecurity,file_inherit,directory_inherit" "$SHARED_PROJECTS" 2>/dev/null || true
+    echo "  ✓ Set ACLs for both users on shared projects"
+  fi
+fi
+
+# Create symlink for USER1
+if [ -e "${SRC_HOME}/projects" ] && [ ! -L "${SRC_HOME}/projects" ]; then
+  ts=$(date +%s)
+  mv "${SRC_HOME}/projects" "${SRC_HOME}/projects.bak.${ts}"
+  echo "  ⚠️  Backed up existing ${USER1}/projects"
+elif [ -L "${SRC_HOME}/projects" ]; then
+  rm "${SRC_HOME}/projects"
+fi
+
+if [ ! -e "${SRC_HOME}/projects" ]; then
+  ln -snf "$SHARED_PROJECTS" "${SRC_HOME}/projects"
+  chown -h "${USER1}:${PRIMARY_GROUP}" "${SRC_HOME}/projects"
+  echo "  ✓ Created projects symlink for ${USER1}"
+fi
+
+# Create symlink for USER2
+if [ -e "${DST_HOME}/projects" ] && [ ! -L "${DST_HOME}/projects" ]; then
+  ts=$(date +%s)
+  mv "${DST_HOME}/projects" "${DST_HOME}/projects.bak.${ts}"
+  echo "  ⚠️  Backed up existing ${USER2}/projects"
+elif [ -L "${DST_HOME}/projects" ]; then
+  rm "${DST_HOME}/projects"
+fi
+
+if [ ! -e "${DST_HOME}/projects" ]; then
+  ln -snf "$SHARED_PROJECTS" "${DST_HOME}/projects"
+  chown -h "${USER2}:${PRIMARY_GROUP}" "${DST_HOME}/projects"
+  echo "  ✓ Created projects symlink for ${USER2}"
+fi
+
+echo "  ✓ Shared projects setup complete: $SHARED_PROJECTS"
+
+# ============================================================================
+# Step 11: Hide sibling user from macOS login screen
+# ============================================================================
+
+if [ "$OS" = "macos" ]; then
+  echo
+  echo "Step 11: Hiding ${USER2} from macOS login screen..."
+
+  # Hide user from login window
+  dscl . create "/Users/${USER2}" IsHidden 1
+
+  # Also hide home directory from Users folder in Finder
+  dscl . create "/Users/${USER2}" NFSHomeDirectory "${DST_HOME}"
+  chflags hidden "${DST_HOME}" 2>/dev/null || true
+
+  echo "  ✓ ${USER2} hidden from login screen"
+  echo "  ℹ️  To show again, run: sudo dscl . delete /Users/${USER2} IsHidden"
+fi
 
 # ============================================================================
 # Summary and Verification
@@ -530,15 +707,26 @@ echo "  ✓ Created symlinks for dotfiles and configs"
 echo "  ✓ Copied .ssh directory (not symlinked)"
 echo "  ✓ Setup Rust/Cargo sharing (if installed)"
 echo "  ✓ Applied ACLs for ${USER2} access"
-echo "  ✓ Fixed binary executable permissions"
+echo "  ✓ Created proper .zshenv for both users (PATH setup)"
+echo "  ✓ Fixed executable permissions (fnm, Node.js, binaries)"
 echo "  ✓ Created .zshrc.local for user overrides"
+echo "  ✓ Created shared ~/projects symlinks for both users"
+if [ "$OS" = "macos" ]; then
+echo "  ✓ Hidden ${USER2} from macOS login screen"
+fi
 echo
 echo "⚠️  IMPORTANT NOTES:"
+echo "  - .zshenv is created for BOTH users (ensures PATH is set correctly)"
 echo "  - .local/share is INDEPENDENT (nvim plugins won't conflict)"
 echo "  - .config/nvim is SYMLINKED with write access (lazy-lock.json shared)"
 echo "  - .ssh is COPIED (not symlinked - security best practice)"
 echo "  - .rustup and .cargo/bin are SYMLINKED (shared toolchain)"
 echo "  - .cargo/registry is INDEPENDENT (per-user package cache)"
+echo "  - ~/projects is SYMLINKED to ${SHARED_PROJECTS} for both users"
+echo "  - fnm/Node.js binaries are made executable and accessible"
+if [ "$OS" = "macos" ]; then
+echo "  - ${USER2} is HIDDEN from login screen (use fast user switching to access)"
+fi
 echo
 echo "For ${USER2} to fully benefit:"
 echo "  - Log out and log back in (to pick up group changes)"
