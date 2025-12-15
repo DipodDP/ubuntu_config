@@ -485,6 +485,21 @@ if [ "$choice_rust" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
 fi
 
 
+# OrbStack setup (fast, native Docker & Linux on macOS)
+echo ""
+choice_orbstack="n"
+if [ "$SILENT_MODE" = "false" ]; then
+    read -p "Do you want to install OrbStack (fast Docker & Linux environment)? (y/N): " choice_orbstack
+fi
+if [ "$choice_orbstack" = "y" ] || [ "$SILENT_MODE" = "true" ]; then
+  echo "Installing OrbStack..."
+  brew install --cask orbstack
+  echo "OrbStack installed successfully."
+  echo "It provides a faster, native replacement for Docker Desktop."
+  echo "Start OrbStack from your Applications folder to begin."
+fi
+
+
 
 # Gemini Account Switcher Setup
 echo ""
