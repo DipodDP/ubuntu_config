@@ -15,13 +15,25 @@ fi
 # Install essential CLI tools
 echo ""
 echo "Installing essential CLI tools..."
-brew install git wget curl tree jq ripgrep fd bat eza htop tldr neovim
+if [ "$SILENT_MODE" = true ]; then
+  brew install -q git wget curl tree jq ripgrep fd bat eza htop tldr neovim
+else
+  brew install git wget curl tree jq ripgrep fd bat eza htop tldr neovim
+fi
 
 # Install GNU utilities for better compatibility
-brew install coreutils findutils gnu-sed gnu-tar grep
+if [ "$SILENT_MODE" = true ]; then
+  brew install -q coreutils findutils gnu-sed gnu-tar grep
+else
+  brew install coreutils findutils gnu-sed gnu-tar grep
+fi
 
 # Install development utilities
-brew install tmux unzip gpg
+if [ "$SILENT_MODE" = true ]; then
+  brew install -q tmux unzip gpg
+else
+  brew install tmux unzip gpg
+fi
 
 # Install build tools
 brew install make gcc
@@ -29,4 +41,8 @@ brew install make gcc
 # Install Nerd Font
 echo ""
 echo "Installing MesloLGS Nerd Font..."
-brew install --cask font-meslo-lg-nerd-font
+if [ "$SILENT_MODE" = true ]; then
+  brew install -q --cask font-meslo-lg-nerd-font
+else
+  brew install --cask font-meslo-lg-nerd-font
+fi

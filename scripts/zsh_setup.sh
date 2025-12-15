@@ -65,5 +65,6 @@ alias tree='eza -lF --tree --icons'
 alias ls='eza -F --icons'
 alias ll='eza -lhHF --icons'
 alias la='eza -alhHF --icons'
+alias grep='rg'
 EOF
 fi

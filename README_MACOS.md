@@ -35,7 +35,7 @@ chmod +x macos_*.sh
 - **GNU utilities**: coreutils, findutils, gnu-sed, gnu-tar
 
 ### Terminal & Shell
-- **iTerm2** - Advanced terminal emulator
+- **Ghostty** - Advanced terminal emulator
 - **Zsh** with Oh My Zsh framework
 - **Powerlevel10k** theme
 - **Plugins**: zsh-autosuggestions, zsh-syntax-highlighting
@@ -394,7 +394,7 @@ defaults write com.todesktop.230313mzl4w4u92 ApplePressAndHoldEnabled -bool fals
 |---------|-------|
 | Task Manager | **Activity Monitor** |
 | Control Panel | **System Settings** |
-| PowerShell/CMD | **Terminal** / iTerm2 |
+| PowerShell/CMD | **Terminal** / Ghostty |
 | Notepad++ | VS Code, Sublime Text |
 | WinRAR/7-Zip | The Unarchiver, Keka |
 | Snipping Tool | **⇧⌘4** or **⇧⌘5** |
@@ -407,7 +407,7 @@ defaults write com.todesktop.230313mzl4w4u92 ApplePressAndHoldEnabled -bool fals
 
 - [ ] Restart terminal or run `source ~/.zshrc`
 - [ ] Configure p10k theme: `p10k configure`
-- [ ] Set iTerm2 font to MesloLGS NF
+- [ ] Set Ghostty font to MesloLGS NF
 - [ ] Grant permissions to installed apps in System Settings
 - [ ] Add SSH key to GitHub/GitLab
 - [ ] Configure Git user name and email
@@ -433,7 +433,7 @@ defaults write com.todesktop.230313mzl4w4u92 ApplePressAndHoldEnabled -bool fals
 ### macos_config.sh
 Main bootstrap script that installs and configures:
 - Homebrew and essential tools
-- Terminal setup (iTerm2, Zsh, plugins)
+- Terminal setup (Ghostty, Zsh, plugins)
 - Development environments (Python, Node.js)
 - Editors (VS Code, Cursor)
 - Productivity tools

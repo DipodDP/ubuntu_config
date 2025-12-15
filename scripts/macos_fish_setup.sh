@@ -67,6 +67,7 @@ abbr -a ll 'eza -lhHF --icons'
 abbr -a la 'eza -alhHF --icons'
 abbr -a ls 'eza -F --icons'
 abbr -a tree 'eza -lF --tree --icons'
+abbr -a grep 'rg'
 
 # Git abbreviations
 abbr -a gs 'git status'

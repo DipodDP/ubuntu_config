@@ -15,7 +15,7 @@ fi
 # Productivity tools
 if [ "$SILENT_MODE" = "false" ]; then
   echo ""
-  read -p "Do you want to install productivity tools? (Rectangle, Raycast, Maccy, Karabiner-Elements) (y/N): " choice_productivity
+  read -p "Do you want to install productivity tools? (Rectangle, Raycast, Maccy, Karabiner-Elements, Ghostty) (y/N): " choice_productivity
 else
   choice_productivity="n" # Default to no in silent mode
 fi
@@ -26,6 +26,7 @@ if [ "$choice_productivity" = "y" ]; then
   brew install --cask maccy            # Clipboard manager
   brew install --cask karabiner-elements  # Keyboard customization
   brew install --cask appcleaner       # App uninstaller
+  brew install --cask ghostty          # Terminal emulator
 
   echo "Productivity tools installed"
   echo "  - Rectangle: Window management (⌃⌥ + arrows)"
@@ -33,4 +34,5 @@ if [ "$choice_productivity" = "y" ]; then
   echo "  - Maccy: Clipboard history (⇧⌘C)"
   echo "  - Karabiner-Elements: Keyboard remapping"
   echo "  - AppCleaner: Clean app uninstall"
+  echo "  - Ghostty: Modern, GPU-accelerated terminal"
 fi
