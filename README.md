@@ -97,12 +97,32 @@ In silent mode:
 
 Use silent mode for automated provisioning of new development machines. For full customization, run in interactive mode (default).
 
+### Extension Management
+
+The repository includes scripts to manage VSCode and Cursor extensions, making it easy to sync your extensions across machines.
+
+**Export your current extensions** (run this on a machine with extensions already installed):
+```bash
+./scripts/editors_export_extensions.sh
+```
+This will export all installed extensions to `config/vscode_extensions.txt`.
+
+**Import extensions** (automatic during bootstrap):
+When you run `./macos_config.sh` and choose to install VSCode or Cursor, extensions from the tracked list will be automatically installed.
+
+**Manual import** (if needed):
+```bash
+# The install_extensions function is called automatically by editors_setup.sh
+# Extensions are installed from config/vscode_extensions.txt
+```
+
 ### Additional Scripts
 
 -   `scripts/macos_fish_setup.sh`: Optional setup for the Fish shell.
 -   `scripts/macos_remote_access.sh`: Optional setup for remote access using NoMachine and Tailscale.
 -   `scripts/gemini_setup.sh`: Optional setup for the Gemini Account Switcher.
--   `scripts/editors_setup.sh`: Optional setup for VS Code, Cursor, and Neovim.
+-   `scripts/editors_setup.sh`: Optional setup for VS Code, Cursor, and Neovim with automatic extension installation.
+-   `scripts/editors_export_extensions.sh`: Export currently installed VSCode/Cursor extensions to a tracked file.
 -   `scripts/git_setup.sh`: Optional setup for GIT and Lazygit.
 -   `scripts/python_setup.sh`: Optional setup for Python with pyenv.
 -   `scripts/node_setup.sh`: Optional setup for Node.js with fnm.

@@ -12,6 +12,70 @@ if [ -z "$SILENT_MODE" ]; then
   SILENT_MODE=false
 fi
 
+# Function to install extensions from tracked list
+install_extensions() {
+  local editor_cmd="$1"
+  local editor_name="$2"
+  local extensions_file="$SCRIPT_DIR/config/vscode_extensions.txt"
+
+  # Check if extensions file exists
+  if [ ! -f "$extensions_file" ]; then
+    echo "No extensions file found at $extensions_file"
+    echo "Run scripts/editors_export_extensions.sh to create one"
+    return 0
+  fi
+
+  # Check if editor command exists
+  if ! command -v "$editor_cmd" &> /dev/null; then
+    echo "Warning: $editor_cmd command not found, skipping extension installation"
+    return 0
+  fi
+
+  echo ""
+  echo "Installing extensions for $editor_name..."
+
+  local total=0
+  local installed=0
+  local failed=0
+  local skipped=0
+
+  while IFS= read -r extension || [ -n "$extension" ]; do
+    # Skip empty lines and comments
+    [[ -z "$extension" || "$extension" =~ ^[[:space:]]*# ]] && continue
+
+    total=$((total + 1))
+
+    # Check if already installed
+    if "$editor_cmd" --list-extensions 2>/dev/null | grep -qi "^${extension}$"; then
+      echo "  ✓ $extension (already installed)"
+      skipped=$((skipped + 1))
+      continue
+    fi
+
+    # Install extension
+    echo "  Installing $extension..."
+    if "$editor_cmd" --install-extension "$extension" --force &> /dev/null; then
+      echo "  ✓ $extension"
+      installed=$((installed + 1))
+    else
+      echo "  ✗ $extension (failed)"
+      failed=$((failed + 1))
+    fi
+  done < "$extensions_file"
+
+  # Summary
+  if [ $total -gt 0 ]; then
+    echo ""
+    echo "$editor_name Extension Installation Summary:"
+    echo "  Total: $total extensions"
+    echo "  Installed: $installed"
+    echo "  Already present: $skipped"
+    if [ $failed -gt 0 ]; then
+      echo "  Failed: $failed"
+    fi
+  fi
+}
+
 # Development tools
 choice_vscode="n" # Default to no
 if [ "$SILENT_MODE" = "false" ]; then
@@ -26,6 +90,9 @@ if [ "$choice_vscode" = "y" ]; then
   defaults write com.microsoft.VSCode ApplePressAndHoldEnabled -bool false
 
   echo "VS Code installed. Run 'code' command after sourcing ~/.zshrc"
+
+  # Install extensions from tracked list
+  install_extensions "code" "VS Code"
 fi
 
 choice_cursor="n" # Default to no
@@ -41,6 +108,9 @@ if [ "$choice_cursor" = "y" ]; then
   defaults write com.todesktop.230313mzl4w4u92 ApplePressAndHoldEnabled -bool false
 
   echo "Cursor installed"
+
+  # Install extensions from tracked list
+  install_extensions "cursor" "Cursor"
 fi
 
 # Install Neovim config (optional)
